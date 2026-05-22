@@ -67,6 +67,9 @@ canvas{
     <button class="tool" onclick="selected='slab'">SLAB</button>
     <button class="tool" onclick="selected='jump'">JUMP PAD</button>
     <button class="tool" onclick="selected='spike'">STACHELN</button>
+    <button class="tool" onclick="selected='start'">START</button>
+    <button class="tool" onclick="selected='goal'">ZIEL</button>
+    <button class="tool" onclick="selected='delete'">LÖSCHEN</button>
 </div>
 
 <canvas id="game"></canvas>
@@ -81,13 +84,16 @@ canvas.height = innerHeight;
 let gravity = 0.8;
 let creative = false;
 let selected = 'block';
+let startPoint = {x:150,y:300};
+let goalPoint = {x:3000,y:300};
 
 const player = {
     x:150,
     y:300,
     size:40,
     velY:0,
-    grounded:false
+    grounded:false,
+    speed:6
 };
 
 let objects = JSON.parse(localStorage.getItem('level1')) || [];
@@ -131,6 +137,33 @@ canvas.addEventListener('click',(e)=>{
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
+    if(selected === 'delete'){
+
+        objects = objects.filter(obj=>!(
+            x > obj.x &&
+            x < obj.x+60 &&
+            y > obj.y &&
+            y < obj.y+60
+        ));
+
+        saveLevel();
+        return;
+    }
+
+    if(selected === 'start'){
+        startPoint = {x,y};
+        player.x = x;
+        player.y = y;
+        saveLevel();
+        return;
+    }
+
+    if(selected === 'goal'){
+        goalPoint = {x,y};
+        saveLevel();
+        return;
+    }
+
     objects.push({
         x,y,
         type:selected
@@ -140,6 +173,9 @@ canvas.addEventListener('click',(e)=>{
 });
 
 function drawPlayer(){
+
+    if(creative) return;
+
     ctx.fillStyle = '#00ffff';
     ctx.shadowBlur = 20;
     ctx.shadowColor = '#00ffff';
@@ -148,6 +184,12 @@ function drawPlayer(){
 }
 
 function drawObjects(){
+
+    ctx.fillStyle = 'lime';
+    ctx.fillRect(startPoint.x,startPoint.y,50,50);
+
+    ctx.fillStyle = 'gold';
+    ctx.fillRect(goalPoint.x,goalPoint.y,50,80);
 
     for(let obj of objects){
 
@@ -220,14 +262,25 @@ function collisions(){
 }
 
 function respawn(){
-    player.x = 150;
-    player.y = 300;
+    player.x = startPoint.x;
+    player.y = startPoint.y;
     player.velY = 0;
 }
 
 function update(){
 
+    player.x += player.speed;
+
     ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    ctx.fillStyle='white';
+    ctx.font='30px Arial';
+
+    let progress = Math.floor((player.x/goalPoint.x)*100);
+
+    if(progress > 100) progress = 100;
+
+    ctx.fillText('FORTSCHRITT: '+progress+'%',20,40);
 
     player.velY += gravity;
     player.y += player.velY;
@@ -242,6 +295,11 @@ function update(){
 
     drawObjects();
     drawPlayer();
+
+    if(player.x > goalPoint.x){
+        alert('LEVEL GESCHAFFT');
+        respawn();
+    }
 
     requestAnimationFrame(update);
 }
