@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Level 1</title>
+<style>
+body{
+    margin:0;
+    overflow:hidden;
+    background:#111;
+}
+
+canvas{
+    background:linear-gradient(#111,#222);
+    display:block;
+}
+
+#info{
+    position:absolute;
+    top:10px;
+    left:10px;
+    color:white;
+    font-family:Arial;
+    z-index:10;
+}
+
+#creativeText{
+    position:absolute;
+    top:50px;
+    left:10px;
+    color:#00ffff;
+    font-size:22px;
+    display:none;
+    text-shadow:0 0 10px cyan;
+    font-family:Arial;
+}
+
+#toolbar{
+    position:absolute;
+    bottom:20px;
+    left:50%;
+    transform:translateX(-50%);
+    display:none;
+    gap:10px;
+    z-index:10;
+}
+
+.tool{
+    padding:10px 20px;
+    background:#00aaff;
+    border:none;
+    color:white;
+    border-radius:10px;
+    cursor:pointer;
+    box-shadow:0 0 10px cyan;
+}
+</style>
+</head>
+<body>
+
+<div id="info">SPACE = SPRINGEN | 1 = CREATIVE MODE</div>
+<div id="creativeText">CREATIVE MODE</div>
+
+<div id="toolbar">
+    <button class="tool" onclick="selected='block'">BLOCK</button>
+    <button class="tool" onclick="selected='slab'">SLAB</button>
+    <button class="tool" onclick="selected='jump'">JUMP PAD</button>
+    <button class="tool" onclick="selected='spike'">STACHELN</button>
+</div>
+
+<canvas id="game"></canvas>
+
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+
+canvas.width = innerWidth;
+canvas.height = innerHeight;
+
+let gravity = 0.8;
+let creative = false;
+let selected = 'block';
+
+const player = {
+    x:150,
+    y:300,
+    size:40,
+    velY:0,
+    grounded:false
+};
+
+let objects = JSON.parse(localStorage.getItem('level1')) || [];
+
+function saveLevel(){
+    localStorage.setItem('level1', JSON.stringify(objects));
+}
+
+window.addEventListener('keydown',(e)=>{
+
+    if(e.code === 'Space'){
+        if(player.grounded){
+            player.velY = -14;
+        }
+    }
+
+    if(e.key === '1'){
+
+        if(!creative){
+            const pin = prompt('PIN eingeben');
+
+            if(pin === '081508151235180Rss#'){
+                creative = true;
+                document.getElementById('toolbar').style.display='flex';
+                document.getElementById('creativeText').style.display='block';
+            }
+        }else{
+            creative = false;
+            document.getElementById('toolbar').style.display='none';
+            document.getElementById('creativeText').style.display='none';
+            saveLevel();
+        }
+    }
+});
+
+canvas.addEventListener('click',(e)=>{
+
+    if(!creative) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    objects.push({
+        x,y,
+        type:selected
+    });
+
+    saveLevel();
+});
+
+function drawPlayer(){
+    ctx.fillStyle = '#00ffff';
+    ctx.shadowBlur = 20;
+    ctx.shadowColor = '#00ffff';
+    ctx.fillRect(player.x,player.y,player.size,player.size);
+    ctx.shadowBlur = 0;
+}
+
+function drawObjects(){
+
+    for(let obj of objects){
+
+        if(obj.type === 'block'){
+            ctx.fillStyle = '#00aaff';
+            ctx.fillRect(obj.x,obj.y,60,60);
+        }
+
+        if(obj.type === 'slab'){
+            ctx.fillStyle = '#55ccff';
+            ctx.fillRect(obj.x,obj.y,60,30);
+        }
+
+        if(obj.type === 'jump'){
+            ctx.fillStyle = '#00ff00';
+            ctx.fillRect(obj.x,obj.y,60,20);
+        }
+
+        if(obj.type === 'spike'){
+            ctx.fillStyle = 'red';
+            ctx.beginPath();
+            ctx.moveTo(obj.x,obj.y+60);
+            ctx.lineTo(obj.x+30,obj.y);
+            ctx.lineTo(obj.x+60,obj.y+60);
+            ctx.fill();
+        }
+    }
+}
+
+function collisions(){
+
+    player.grounded = false;
+
+    for(let obj of objects){
+
+        let w = 60;
+        let h = 60;
+
+        if(obj.type === 'slab') h = 30;
+        if(obj.type === 'jump') h = 20;
+
+        if(obj.type !== 'spike'){
+            if(player.x < obj.x+w &&
+               player.x+player.size > obj.x &&
+               player.y < obj.y+h &&
+               player.y+player.size > obj.y){
+
+                if(player.velY >= 0){
+                    player.y = obj.y-player.size;
+                    player.velY = 0;
+                    player.grounded = true;
+
+                    if(obj.type === 'jump'){
+                        player.velY = -20;
+                    }
+                }
+            }
+        }
+
+        if(obj.type === 'spike'){
+            if(player.x < obj.x+60 &&
+               player.x+player.size > obj.x &&
+               player.y < obj.y+60 &&
+               player.y+player.size > obj.y){
+
+                respawn();
+            }
+        }
+    }
+}
+
+function respawn(){
+    player.x = 150;
+    player.y = 300;
+    player.velY = 0;
+}
+
+function update(){
+
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    player.velY += gravity;
+    player.y += player.velY;
+
+    if(player.y > canvas.height-80){
+        player.y = canvas.height-80;
+        player.velY = 0;
+        player.grounded = true;
+    }
+
+    collisions();
+
+    drawObjects();
+    drawPlayer();
+
+    requestAnimationFrame(update);
+}
+
+update();
+</script>
+</body>
+</html>
