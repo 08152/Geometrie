@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neon Dash</title>
+<style>
+body{
+    margin:0;
+    overflow:hidden;
+    font-family:Arial;
+    background:#050816;
+    color:white;
+}
+
+.menu{
+    position:absolute;
+    inset:0;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    flex-direction:column;
+    background:radial-gradient(circle,#0b1f55,#050816);
+}
+
+.title{
+    font-size:70px;
+    color:#55ccff;
+    text-shadow:0 0 20px #00bbff;
+    margin-bottom:40px;
+}
+
+.btn{
+    width:300px;
+    padding:20px;
+    margin:10px;
+    border:none;
+    border-radius:20px;
+    font-size:25px;
+    cursor:pointer;
+    background:#00aaff;
+    color:white;
+    box-shadow:0 0 20px #00aaff;
+    transition:0.2s;
+}
+
+.btn:hover{
+    transform:scale(1.05);
+    box-shadow:0 0 40px #00ccff;
+}
+
+.levels{
+    display:none;
+    flex-direction:column;
+}
+</style>
+</head>
+<body>
+
+<div class="menu" id="menu">
+    <div class="title">NEON DASH</div>
+
+    <button class="btn" onclick="startGame()">START</button>
+    <button class="btn" onclick="openLevels()">LEVEL AUSWAHL</button>
+
+    <div class="levels" id="levels">
+        <button class="btn" onclick="window.location='1.html'">LEVEL 1</button>
+    </div>
+</div>
+
+<script>
+function startGame(){
+    window.location='1.html';
+}
+
+function openLevels(){
+    document.getElementById('levels').style.display='flex';
+}
+</script>
+
+</body>
+</html>
